@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CTF Challenge - 3 Levels</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Courier New', monospace;
+            background: linear-gradient(135deg, #0c0c0c 0%, #1a1a2e 50%, #16213e 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #0f0;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .matrix-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+            opacity: 0.1;
+        }
+
+        .container {
+            position: relative;
+            z-index: 10;
+            text-align: center;
+            padding: 40px;
+            background: rgba(0, 20, 0, 0.9);
+            border: 1px solid #0f0;
+            border-radius: 10px;
+            box-shadow: 0 0 30px rgba(0, 255, 0, 0.2);
+            max-width: 600px;
+            width: 90%;
+        }
+
+        .glitch {
+            font-size: 2.5em;
+            font-weight: bold;
+            animation: glitch 2s infinite;
+            text-shadow: 0 0 10px #0f0;
+            margin-bottom: 10px;
+        }
+
+        @keyframes glitch {
+            0%, 100% { transform: translate(0); }
+            20% { transform: translate(-2px, 2px); }
+            40% { transform: translate(-2px, -2px); }
+            60% { transform: translate(2px, 2px); }
+            80% { transform: translate(2px, -2px); }
+        }
+
+        .subtitle {
+            color: #0a0;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+
+        .levels {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .level-btn {
+            background: transparent;
+            border: 1px solid #0f0;
+            color: #0f0;
+            padding: 12px 24px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 1em;
+            transition: all 0.3s;
+            min-width: 100px;
+        }
+
+        .level-btn:hover, .level-btn.active {
+            background: #0f0;
+            color: #000;
+            box-shadow: 0 0 20px #0f0;
+        }
+
+        .level-content {
+            display: none;
+            padding: 30px;
+            border: 1px dashed #0f0;
+            background: rgba(0, 30, 0, 0.5);
+            text-align: left;
+            min-height: 200px;
+        }
+
+        .level-content.active {
+            display: block;
+            animation: fadeIn 0.5s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .level-title {
+            color: #0f0;
+            font-size: 1.3em;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #0f0;
+            padding-bottom: 10px;
+        }
+
+        .hint-text {
+            color: #aaa;
+            font-size: 0.9em;
+            line-height: 1.6;
+        }
+
+        .terminal {
+            margin-top: 20px;
+            background: #000;
+            border: 1px solid #333;
+            padding: 15px;
+            font-size: 0.85em;
+            color: #0f0;
+        }
+
+        .cursor {
+            display: inline-block;
+            width: 8px;
+            height: 16px;
+            background: #0f0;
+            animation: blink 1s infinite;
+            vertical-align: middle;
+        }
+
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
+        }
+
+        .security-warning {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(255, 0, 0, 0.1);
+            border: 1px solid #f00;
+            color: #f00;
+            padding: 10px 20px;
+            font-size: 0.8em;
+            z-index: 100;
+        }
+
+        .fake-image {
+            width: 150px;
+            height: 150px;
+            background: linear-gradient(45deg, #111, #222);
+            margin: 20px auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid #333;
+            color: #444;
+            font-size: 0.8em;
+        }
+
+        .encoded-box {
+            background: #001100;
+            border: 1px solid #0f0;
+            padding: 15px;
+            margin-top: 15px;
+            font-family: monospace;
+            word-break: break-all;
+            color: #0a0;
+        }
+    </style>
+</head>
+<body>
+    <canvas class="matrix-bg" id="matrix"></canvas>
+    <div class="security-warning">⚠ AUTHORIZED PERSONNEL ONLY</div>
+
+    <div class="container">
+        <h1 class="glitch">CTF CHALLENGE</h1>
+        <p class="subtitle">Find the flags hidden in each level</p>
+
+        <div class="levels">
+            <button class="level-btn active" onclick="showLevel(1)" id="btn1">Level 1</button>
+            <button class="level-btn" onclick="showLevel(2)" id="btn2">Level 2</button>
+            <button class="level-btn" onclick="showLevel(3)" id="btn3">Level 3</button>
+        </div>
+
+        <!-- LEVEL 1: HTML Comment (Question 1) -->
+        <div id="level1" class="level-content active">
+            <div class="level-title">🔍 Level 1: Source Inspector</div>
+            <div class="hint-text">
+                <p>Welcome, recruit. Your first task is to inspect this page.</p>
+                <p>Sometimes developers leave notes in the code that aren't meant to be seen...</p>
+                <br>
+                <p><strong>Task:</strong> Find the flag hidden in the HTML source code.</p>
+                <p><strong>Hint:</strong> Right-click → View Page Source (or press Ctrl+U)</p>
+            </div>
+            
+            <div class="terminal">
+                <span>root@ctf-level1:~$</span> scan_source<span class="cursor"></span><br><br>
+                > Initializing scan...<br>
+                > Checking HTML structure...<br>
+                > Waiting for input...
+            </div>
+
+            <!-- CTF{inspect_element} -->
+        </div>
+
+        <!-- LEVEL 2: External Script Reference (Question 2) -->
+        <div id="level2" class="level-content">
+            <div class="level-title">🔐 Level 2: External Resources</div>
+            <div class="hint-text">
+                <p>This page loads external resources. Sometimes secrets are hidden in separate files.</p>
+                <p>Check what other files this page is trying to load...</p>
+                <br>
+                <p><strong>Task:</strong> Find the flag in the external script reference.</p>
+                <p><strong>Hint:</strong> Check the Network tab or look for script tags in the source</p>
+            </div>
+
+            <div class="fake-image">
+                [LOADING_EXTERNAL_RESOURCES]
+            </div>
+
+            <div class="terminal">
+                <span>root@ctf-level2:~$</span> analyze_dependencies<span class="cursor"></span><br><br>
+                > Loading external modules...<br>
+                > secret.js referenced<br>
+                > Check the script source...
+            </div>
+
+            <!-- External script reference contains the flag -->
+            <script src="secret.js"></script>
+        </div>
+
+        <!-- LEVEL 3: Base64/Encoded (Question 3) -->
+        <div id="level3" class="level-content">
+            <div class="level-title">🧩 Level 3: Encoding Challenge</div>
+            <div class="hint-text">
+                <p>Data is often encoded to hide its true meaning. Can you decode this?</p>
+                <p>This looks like Base64 encoding... but you'll need to verify.</p>
+                <br>
+                <p><strong>Task:</strong> Decode the encrypted flag below.</p>
+                <p><strong>Hint:</strong> Use Base64 decoder or browser console (atob())</p>
+            </div>
+
+            <div class="encoded-box" id="encoded-flag">
+                Q1RGe2Jhc2U2NF9kZWNvZGVyfQ==
+            </div>
+
+            <div class="terminal">
+                <span>root@ctf-level3:~$</span> decode_base64<span class="cursor"></span><br><br>
+                > Encrypted data detected...<br>
+                > Algorithm: Base64<br>
+                > Use: atob("...") in console
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Matrix rain effect
+        const canvas = document.getElementById('matrix');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%^&*';
+        const drops = Array(Math.floor(canvas.width / 14)).fill(1);
+
+        function drawMatrix() {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#0f0';
+            ctx.font = '14px monospace';
+            
+            drops.forEach((y, i) => {
+                const text = chars[Math.floor(Math.random() * chars.length)];
+                ctx.fillText(text, i * 14, y * 14);
+                drops[i] = y * 14 > canvas.height && Math.random() > 0.975 ? 0 : y + 1;
+            });
+        }
+        setInterval(drawMatrix, 35);
+
+        // Level switching
+        function showLevel(n) {
+            // Update buttons
+            document.querySelectorAll('.level-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById('btn' + n).classList.add('active');
+            
+            // Update content
+            document.querySelectorAll('.level-content').forEach(el => el.classList.remove('active'));
+            document.getElementById('level' + n).classList.add('active');
+        }
+
+        // Console hint for Level 3
+        console.log("%cLevel 3 Hint:", "color: #0f0; font-size: 14px; font-weight: bold;");
+        console.log("%cCopy the encoded text and run: atob('Q1RGe2Jhc2U2NF9kZWNvZGVyfQ==')", "color: #aaa;");
+        
+        // Hidden console flag for fun (optional)
+        console.log("%cSecret: CTF{console_master}", "color: #0f0; background: #000; padding: 5px;");
+    </script>
+
+    <!-- 
+        LEVEL 1 ANSWER: CTF{inspect_element}
+        (Hidden in HTML comment above)
+    -->
+</body>
+</html>
